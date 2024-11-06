@@ -27,7 +27,7 @@ def Recommender(Movie_idx, movie_factors, number, data):
 
 #Process data to Pytorch Format
 def processData(data):
-    tfidf = TfidfVectorizer(stop_words="english")
+    tfidf = TfidfVectorizer(max_features=500)
     #convert content describtion to numeric values
     encoded_content = tfidf.fit_transform(data["content"]).toarray()
     
@@ -38,7 +38,7 @@ def processData(data):
     #Change the all factors to pytorch format
     genres = torch.tensor(encoded_genres, dtype=torch.float32)
     companies = torch.tensor(encoded_companies, dtype=torch.float32)
-    content = torch.tensor(encoded_companies, dtype=torch.float32)
+    content = torch.tensor(encoded_content, dtype=torch.float32)
     movie_factors = torch.cat([genres, companies, content], dim=1)
     return movie_factors
 
