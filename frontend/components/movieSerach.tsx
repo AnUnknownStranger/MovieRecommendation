@@ -1,7 +1,7 @@
-'use client'
+// pages/index.js
+
 import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
-import Header from '@/components/navbar';
 
 export default function MovieSearch() {
     const [query, setQuery] = useState('');
@@ -33,7 +33,7 @@ export default function MovieSearch() {
                 .then((res) => res.json())
                 .then((data) => {
                     // Extract only titles
-                    setResults(data.map((movie: { title: any; }) => movie.title));
+                    setResults(data.map(movie => movie.title));
                 })
                 .catch(error => console.error("Error fetching search results:", error));
         } else {
@@ -42,9 +42,7 @@ export default function MovieSearch() {
     }, [debouncedQuery]);
 
     return (
-      <>
-        <Header />
-        <div className="movie-search p-8 space-y-4">
+        <div className="movie-search p-4">
             <Input
                 placeholder="Search for a movie..."
                 value={query}
@@ -59,6 +57,5 @@ export default function MovieSearch() {
                 ))}
             </ul>
         </div>
-      </>
     );
 }
