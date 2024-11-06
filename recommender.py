@@ -62,12 +62,8 @@ def MakeRecommendation(movie_title):
         return None
     #Parse movie data
     movie_factors = processData(data)
-    # Save the precomputed movie_factors
-    torch.save(movie_factors, "Movie_factor.pt")
 
-    # Later, we load the precomputed data and generate recommendations
-    precomputed_factors = torch.load("Movie_factor.pt")
-    recommended_indices = Recommender(Movie_idx=movie_idx, movie_factors=precomputed_factors, number=20, data=data)
+    recommended_indices = Recommender(Movie_idx=movie_idx, movie_factors=movie_factors, number=20, data=data)
 
     recommended_movies = TopRecommendations(data,recommended_indices,5)
     
