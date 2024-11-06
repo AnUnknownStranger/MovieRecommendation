@@ -22,23 +22,19 @@ def get_data():
 
 
 ## Login and Register
-@app.route('/login/new_user', methods=['POST'])  
+@app.route('/register', methods=['POST'])  
 def doNewUser():
-    return newUser()
-
-@app.route('/login/returning_user', methods=['POST'])  
-def doReturningUser():
-    return returningUser()
-
-@app.route('/login')
-def doRegister():
     return register()
+
+@app.route('/login', methods=['POST'])  
+def doReturningUser():
+    return login()
 
 @app.route('/logout', methods=['POST'])
 def logout():
     response = make_response(jsonify({"message": "Logged out successfully"}))
-    response.set_cookie('auth_token', '', expires=0)  # Setting the cookie to expire immediately
+    response.set_cookie('auth_token', '', expires=0)
     return response
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5001)
+    app.run(debug=True, port=8080)

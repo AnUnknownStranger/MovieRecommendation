@@ -1,13 +1,11 @@
 
-from flask import request, make_response, jsonify, redirect
-from bson import json_util
+from flask import request, make_response, jsonify
 import bcrypt
 import hashlib
 import secrets
 import re
 
-from response import sendResponse, page_not_found
-from config import app, userCollection, channelCollection
+from .config import userCollection
 
 
 def is_valid_email(email):
@@ -15,7 +13,7 @@ def is_valid_email(email):
     return re.match(email_pattern, email)
 
 
-def newUser():
+def register():
     try:
         newUserDat = request.get_json()
             
@@ -23,10 +21,6 @@ def newUser():
         username = newUserDat.get("username", "")
         password = newUserDat.get("password", "")
         passwordConfirm = newUserDat.get("confirm_password", "")
-
-        print("***************************************")
-        print(password)
-        print(passwordConfirm)
 
         if email == "" or username == "" or password == "" or passwordConfirm == "":
             print("EMPTY FIELDS")
@@ -56,19 +50,16 @@ def newUser():
             "username": username, 
             "password": hashed_password, 
             "salt": salt, 
-            "following": [],
-            'followers': [],
-            "profile_image": "public/image/mainProfile.png",
-            "direct_messages": [],
-            "verified": False,
+            "likes": [],
+            'dislikes': [],
             })
-        # print(userCollection)
+
         return make_response()
-    except Exception as e:  # Catch the exception and print it for debugging
+    except Exception as e:
         print(e)
         return jsonify({'message': 'An error occurred'}), 500
 
-def returningUser():
+def login():
     try:
         requestData = request.get_json()
         username = requestData.get("username")
@@ -100,29 +91,3 @@ def returningUser():
 
     except Exception as e: 
         return jsonify({'message': 'An error occurred'}), 500
-
-def register():
-    try:
-        return sendResponse(filenamedir="./build/index.html", path=None, mimetype="text/html", xcontenttypeoptions="nosniff", makeresponse=True)
-    except Exception:
-        return page_not_found()
-
-def getUser():
-    try:
-        token = request.cookies.get("auth_tok")
-        if token:
-            hashed_token = hashlib.sha256(token.encode("utf-8")).hexdigest()
-            user = userCollection.find_one({"token": hashed_token})
-
-            if user:
-                channels = list(channelCollection.find({}))
-                user["channels"] = channels
-                return json_util.dumps(user)
-            else:
-                return redirect("/login"), 302
-        else:
-            return jsonify({"message": "No token found"}), 401
-    except Exception as e:
-        error_message = f"An error occurred: {e}"
-        print("***********ERROR**:", error_message)
-        return jsonify({"message": error_message}), 500
