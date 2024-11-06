@@ -23,7 +23,10 @@ def Recommender(Movie_idx, movie_factors, number, data):
     rec_indices = similarities.argsort()[::-1][1:number+1]  
     #remove the original title
     rec_indices = [idx for idx in rec_indices if data.iloc[idx]['title'] != data.iloc[Movie_idx]['title']]
-    return rec_indices
+    
+    # Get corresponding similarity scores
+    rec_scores = similarities[rec_indices]
+    return rec_indices, rec_scores
 
 #Process data to Pytorch Format
 def processData(data):
@@ -43,10 +46,11 @@ def processData(data):
     return movie_factors
 
 #Make top movie recommendations recommendations based on the vote average and popularity
-def TopRecommendations(data,recommendations,num):
+def TopRecommendations(data,recommendations,score,num):
     #Find the corresponding movies
     recommended_movies = data.iloc[recommendations].copy()
-    recommended_movies['Score'] = (0.5*recommended_movies['vote_average']) + (0.5*recommended_movies['popularity'])
+    recommended_movies['Sim_Score'] = score
+    recommended_movies['Score'] = ((0.25*recommended_movies['vote_average']) + (0.25*recommended_movies['popularity']))+(0.5*recommended_movies["Sim_Score"])
 
     recommendations = recommended_movies.sort_values(by='Score', ascending=False).head(num)['title'].to_numpy()
 
@@ -67,9 +71,9 @@ def MakeRecommendation(movie_title):
 
     # Later, we load the precomputed data and generate recommendations
     precomputed_factors = torch.load("Movie_factor.pt")
-    recommended_indices = Recommender(Movie_idx=movie_idx, movie_factors=precomputed_factors, number=10, data=data)
+    recommended_indices,sim_score = Recommender(Movie_idx=movie_idx, movie_factors=precomputed_factors, number=10, data=data)
 
-    recommended_movies = TopRecommendations(data,recommended_indices,5)
+    recommended_movies = TopRecommendations(data,recommended_indices,sim_score,5)
     
     return recommended_movies
 
@@ -80,7 +84,7 @@ def title_idx_conversion(data, title):
     
     
 def main():
-    print(MakeRecommendation("Finding nemo"))
+    print(MakeRecommendation('Finding Nemo'))
 
 if __name__ == "__main__":
     main()
