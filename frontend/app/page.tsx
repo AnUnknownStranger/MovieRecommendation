@@ -29,7 +29,7 @@ export default function MovieSearch() {
     // Fetch search results from Flask API
     useEffect(() => {
         if (debouncedQuery) {
-            fetch(`http://localhost:5000/search/title?q=${debouncedQuery}`)
+            fetch(`http://localhost:8080/search/title?q=${debouncedQuery}`)
                 .then((res) => res.json())
                 .then((data) => {
                     // Extract only titles
