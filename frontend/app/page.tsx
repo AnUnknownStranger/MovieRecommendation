@@ -1,64 +1,175 @@
-'use client'
+'use client';
 import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
-import Header from '@/components/navbar';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
+
+interface Movie {
+    id: string;
+    title: string;
+}
+
+interface MovieDetails {
+    id: string;
+    title: string;
+    overview: string;
+    releaseDate: string;
+    runtime: string;
+    genres: string[];
+    productionCompanies: string[];
+    popularity: string;
+    voteAverage: string;
+    voteCount: string;
+}
 
 export default function MovieSearch() {
     const [query, setQuery] = useState('');
-    const [results, setResults] = useState([]);
+    const [results, setResults] = useState<Movie[]>([]);
+    const [error, setError] = useState<string | null>(null);
+    const [selectedMovie, setSelectedMovie] = useState<MovieDetails | null>(null);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-    // Debounce hook for efficient API calls
-    function useDebounce(value:any, delay:any) {
+    function useDebounce(value: string, delay: number) {
         const [debouncedValue, setDebouncedValue] = useState(value);
-
         useEffect(() => {
             const handler = setTimeout(() => {
                 setDebouncedValue(value);
             }, delay);
-
-            return () => {
-                clearTimeout(handler);
-            };
+            return () => clearTimeout(handler);
         }, [value, delay]);
-
         return debouncedValue;
     }
 
-    const debouncedQuery = useDebounce(query, 300); // 300 ms debounce
+    const debouncedQuery = useDebounce(query, 300);
 
-    // Fetch search results from Flask API
     useEffect(() => {
         if (debouncedQuery) {
             fetch(`http://localhost:8080/search/title?q=${debouncedQuery}`)
                 .then((res) => res.json())
                 .then((data) => {
-                    // Extract only titles
-                    setResults(data.map((movie: { title: any; }) => movie.title));
+                    setResults(data.map((movie: { id: string; title: string; }) => ({
+                        id: movie.id,
+                        title: movie.title,
+                    })));
                 })
-                .catch(error => console.error("Error fetching search results:", error));
+                .catch(error => {
+                    console.error("Error fetching search results:", error);
+                    setError("Failed to fetch search results");
+                });
         } else {
-            setResults([]); // Clear results if query is empty
+            setResults([]);
         }
     }, [debouncedQuery]);
 
+    const handleLike = async (movieId: string) => {
+        try {
+            const response = await fetch('http://localhost:8080/api/like', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ movieId }),
+            });
+            if (!response.ok) throw new Error('Failed to like movie');
+            alert('Movie liked successfully!');
+        } catch (error) {
+            console.error("Error liking movie:", error);
+            setError("Failed to like movie");
+        }
+    };
+
+    const handleDislike = async (movieId: string) => {
+        try {
+            const response = await fetch('http://localhost:8080/api/dislike', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ movieId }),
+            });
+            if (!response.ok) throw new Error('Failed to dislike movie');
+            alert('Movie disliked successfully!');
+        } catch (error) {
+            console.error("Error disliking movie:", error);
+            setError("Failed to dislike movie");
+        }
+    };
+
+    const fetchMovieDetails = async (movieId: string) => {
+        try {
+            const response = await fetch(`http://localhost:8080/api/movie/details?id=${movieId}`);
+            if (!response.ok) throw new Error("Failed to fetch movie details");
+            const data = await response.json();
+            setSelectedMovie(data);
+            setIsDialogOpen(true);
+        } catch (error) {
+            console.error("Error fetching movie details:", error);
+            setError("Failed to fetch movie details");
+        }
+    };
+
     return (
-      <>
-        <Header />
         <div className="movie-search p-8 space-y-4">
+            {error && <p className="text-red-500">{error}</p>}
             <Input
                 placeholder="Search for a movie..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 className="w-full p-2 border rounded"
             />
-            <ul className="results mt-4">
-                {results.map((title, index) => (
-                    <li key={index} className="text-lg font-semibold">
-                        {title}
+            <ul className="results mt-4 space-y-2">
+                {results.map((movie) => (
+                    <li key={movie.id} className="text-lg font-semibold flex items-center justify-between p-2 border rounded-lg">
+                        <span
+                            className="cursor-pointer text-blue-500"
+                            onClick={() => fetchMovieDetails(movie.id)}
+                        >
+                            {movie.title}
+                        </span>
+                        <div className="space-x-2">
+                            <button
+                                className="px-4 py-2 bg-green-500 text-white rounded"
+                                onClick={() => handleLike(movie.id)}
+                            >
+                                Like
+                            </button>
+                            <button
+                                className="px-4 py-2 bg-red-500 text-white rounded"
+                                onClick={() => handleDislike(movie.id)}
+                            >
+                                Dislike
+                            </button>
+                        </div>
                     </li>
                 ))}
             </ul>
+
+            {selectedMovie && (
+                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                    <DialogTrigger asChild>
+                        <button className="hidden">Open</button>
+                    </DialogTrigger>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>{selectedMovie.title}</DialogTitle>
+                            <DialogDescription>
+                                <p><strong>Overview:</strong> {selectedMovie.overview}</p>
+                                <p><strong>Release Date:</strong> {selectedMovie.releaseDate}</p>
+                                <p><strong>Runtime:</strong> {selectedMovie.runtime} mins</p>
+                                <p><strong>Genres:</strong> {selectedMovie.genres.join(", ")}</p>
+                                <p><strong>Production Companies:</strong> {selectedMovie.productionCompanies.join(", ")}</p>
+                                <p><strong>Popularity:</strong> {selectedMovie.popularity}</p>
+                                <p><strong>Average Vote:</strong> {selectedMovie.voteAverage}</p>
+                                <p><strong>Vote Count:</strong> {selectedMovie.voteCount}</p>
+                            </DialogDescription>
+                        </DialogHeader>
+                    </DialogContent>
+                </Dialog>
+            )}
         </div>
-      </>
     );
 }

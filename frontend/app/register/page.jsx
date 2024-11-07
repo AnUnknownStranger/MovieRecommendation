@@ -24,6 +24,7 @@ const RegisterPage = () => {
           email: values.email,
           username: values.username,
           password: values.password,
+          confirmPassword: values.confirmPassword,
         }),
       });
 

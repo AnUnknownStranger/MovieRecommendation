@@ -33,7 +33,7 @@ export default function MovieSearch() {
                 .then((res) => res.json())
                 .then((data) => {
                     // Extract only titles
-                    setResults(data.map(movie => movie.title));
+                    setResults(data.map((movie: { title: any; }) => movie.title));
                 })
                 .catch(error => console.error("Error fetching search results:", error));
         } else {

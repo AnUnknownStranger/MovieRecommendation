@@ -20,7 +20,7 @@ def register():
         email = newUserDat.get("email", "")
         username = newUserDat.get("username", "")
         password = newUserDat.get("password", "")
-        passwordConfirm = newUserDat.get("confirm_password", "")
+        passwordConfirm = newUserDat.get("confirmPassword", "")
 
         if email == "" or username == "" or password == "" or passwordConfirm == "":
             print("EMPTY FIELDS")
@@ -75,10 +75,15 @@ def login():
             hashedPassword = bcrypt.hashpw(userPassword.encode(), salt)
 
             if hashedPassword == userRecord["password"]:
+                # Generate auth token and hashed token for database storage
                 token = secrets.token_hex()
                 hashedToken = hashlib.sha256(token.encode("utf-8")).hexdigest()
-                response = make_response()
-                response.set_cookie("auth_tok", value=token, max_age=3600, httponly=True)
+
+                # Set the auth token as a secure, HttpOnly cookie
+                response = make_response(jsonify({'message': 'Login successful'}))
+                response.set_cookie("authToken", value=token, max_age=3600, httponly=True, secure=True)
+
+                # Update user record in MongoDB with the hashed token
                 userCollection.update_one(
                     {"username": username},
                     {"$set": {"token": hashedToken}}
@@ -91,3 +96,5 @@ def login():
 
     except Exception as e: 
         return jsonify({'message': 'An error occurred'}), 500
+
+    
