@@ -9,7 +9,7 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog";
-
+ 
 interface Movie {
     id: string;
     title: string;
