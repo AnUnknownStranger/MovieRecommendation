@@ -1,6 +1,6 @@
 from pymongo import MongoClient
 
-client = MongoClient("mongodb://localhost:27017/")
+client = MongoClient("mongo")
 db = client["MovieRecommendations"]
 movieCollection = db["movies_metadata"]
 userCollection = db["user"]
