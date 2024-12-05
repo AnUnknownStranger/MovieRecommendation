@@ -56,19 +56,20 @@ def TopRecommendations(data,recommendations,score,num):
 
     return recommendations
     
-
-def MakeRecommendation(movie_title):
+def initdata():
     #Obatin data by parsing csv file
     data = csvParser.ParseMovieData()
-
-    movie_idx = title_idx_conversion(data,movie_title)
-    if movie_idx == None:
-        return None
     #Parse movie data
     movie_factors = processData(data)
     # Save the precomputed movie_factors
     torch.save(movie_factors, "Movie_factor.pt")
+    return data
 
+def MakeRecommendation(data,movie_title):
+
+    movie_idx = title_idx_conversion(data,movie_title)
+    if movie_idx == None:
+        return None
     # Later, we load the precomputed data and generate recommendations
     precomputed_factors = torch.load("Movie_factor.pt")
     recommended_indices,sim_score = Recommender(Movie_idx=movie_idx, movie_factors=precomputed_factors, number=10, data=data)

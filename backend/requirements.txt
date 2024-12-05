@@ -1,0 +1,10 @@
+flask
+pymongo
+bcrypt
+flask-socketio
+torch 
+torchvision 
+torchaudio
+scikit-learn
+flask_cors
+pandas

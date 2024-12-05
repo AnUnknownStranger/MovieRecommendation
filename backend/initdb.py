@@ -8,4 +8,3 @@ df = pd.read_csv(csv_file_path)
 
 data = json.loads(df.to_json(orient="records"))
 movieCollection.insert_many(data)
-

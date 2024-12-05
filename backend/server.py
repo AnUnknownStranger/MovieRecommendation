@@ -1,9 +1,9 @@
 from flask import Flask, jsonify, make_response
 from flask_cors import CORS
 
-from backend.auth_routes import *
-from backend.config import *
-
+from auth_routes import *
+from config import *
+from util import recommender
 from bson import ObjectId 
 import hashlib
 
@@ -16,6 +16,8 @@ def get_user_from_token(auth_token):
     hashed_token = hashlib.sha256(auth_token.encode("utf-8")).hexdigest()
     return userCollection.find_one({"token": hashed_token})
 
+
+Movie_data = recommender.initdata()
 @app.route('/')
 def home():
     return "Hello, Flask!"
@@ -139,6 +141,16 @@ def like_movie():
         return jsonify({"message": "Movie liked successfully"}), 200
     else:
         return jsonify({"error": "Invalid movie ID"}), 400
+    
+@app.route('/api/MakeRecommendation', methods=['POST'])
+def recommend_movie():
+    global Movie_data 
+    movie_title = request.json.get("movieTitle")
+    if movie_title:
+        Recommendations = recommender.MakeRecommendation(Movie_data,movie_title).tolist()
+        return jsonify({"Recommendations": Recommendations}), 200
+    else:
+        return jsonify({"error": "Invalid movie Title"}), 400
 
     
 @app.route('/api/dislike', methods=['POST'])

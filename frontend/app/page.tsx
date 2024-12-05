@@ -34,6 +34,8 @@ export default function MovieSearch() {
     const [error, setError] = useState<string | null>(null);
     const [selectedMovie, setSelectedMovie] = useState<MovieDetails | null>(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [recommendations, setRecommendations] = useState<string[]>([]);
+    const [showRecommendations, setShowRecommendations] = useState(false);
 
     function useDebounce(value: string, delay: number) {
         const [debouncedValue, setDebouncedValue] = useState(value);
@@ -99,6 +101,25 @@ export default function MovieSearch() {
         }
     };
 
+    const MakeRecommendation = async (movieTitle: string) => {
+        try {
+            const response = await fetch('http://localhost:8080/api/MakeRecommendation', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ movieTitle }),
+            });
+            if (!response.ok) throw new Error('Failed to Make Recommendation');
+            const data = await response.json();
+            setRecommendations(data.Recommendations);
+            setIsDialogOpen(true);
+            setShowRecommendations(true);
+        } catch (error) {
+            console.error("Error Making Recommendation:", error);
+            setError("Failed to Make Recommendation");
+        }
+    };
+
     const fetchMovieDetails = async (movieId: string) => {
         try {
             const response = await fetch(`http://localhost:8080/api/movie/details?id=${movieId}`);
@@ -106,12 +127,14 @@ export default function MovieSearch() {
             const data = await response.json();
             setSelectedMovie(data);
             setIsDialogOpen(true);
+            setShowRecommendations(false);
         } catch (error) {
             console.error("Error fetching movie details:", error);
             setError("Failed to fetch movie details");
         }
     };
 
+    
     return (
         <div className="movie-search p-8 space-y-4">
             {error && <p className="text-red-500">{error}</p>}
@@ -131,6 +154,13 @@ export default function MovieSearch() {
                             {movie.title}
                         </span>
                         <div className="space-x-2">
+                        <button
+                                className="px-4 py-2 bg-blue-800 text-white rounded"
+                                onClick={() => MakeRecommendation(movie.title)}
+                            >
+                                Find Similar
+                            </button>
+                            
                             <button
                                 className="px-4 py-2 bg-green-500 text-white rounded"
                                 onClick={() => handleLike(movie.id)}
@@ -149,7 +179,7 @@ export default function MovieSearch() {
             </ul>
 
             {selectedMovie && (
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <Dialog open={isDialogOpen && !showRecommendations} onOpenChange={setIsDialogOpen}>
                     <DialogTrigger asChild>
                         <button className="hidden">Open</button>
                     </DialogTrigger>
@@ -170,6 +200,29 @@ export default function MovieSearch() {
                     </DialogContent>
                 </Dialog>
             )}
+
+            {recommendations &&(
+                <Dialog open={isDialogOpen && showRecommendations} onOpenChange={setIsDialogOpen}>
+                    <DialogTrigger asChild>
+                        <button className="hidden">Open</button>
+                    </DialogTrigger>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>{"Recommendations"}</DialogTitle>
+                            <DialogDescription>
+                                <div>
+                                    <ul>
+                                        {recommendations.map((rec, index) => (
+                                            <li key={index}>{rec}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            </DialogDescription>
+                        </DialogHeader>
+                    </DialogContent>
+                </Dialog>
+            )}
+
         </div>
     );
 }

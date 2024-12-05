@@ -5,7 +5,7 @@ import hashlib
 import secrets
 import re
 
-from .config import userCollection
+from config import userCollection
 
 
 def is_valid_email(email):
