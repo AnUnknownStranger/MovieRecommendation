@@ -5,14 +5,7 @@ from util import csvParser
 import torch
 import torch.nn as nn
 
-# Trainable neural network model (optional)
-class MovieRecommender(nn.Module):
-    def __init__(self, input_dim):
-        super(MovieRecommender, self).__init__()
-        self.fc = nn.Linear(input_dim, 128)  # Simple linear layer
-    
-    def forward(self, x):
-        return self.fc(x)
+
 
 def Recommender(Movie_idx, movie_factors, number, data):
     

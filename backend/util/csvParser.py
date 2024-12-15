@@ -39,7 +39,7 @@ def ParseMovieData():
     content_df['genres'] = content_df['genres'].fillna('').apply(parse_genres)
     
     content_df['production_companies'] = content_df['production_companies'].fillna('').apply(parse_production_companies)
-    content_df['content'] = content_df['overview'] + ' ' + content_df['genres'] + ' ' + content_df['overview'] + ' ' + content_df['tagline'] + ' ' + content_df['production_companies']
+    content_df['content'] = content_df['overview'] + ' ' + content_df['genres'] + ' ' + content_df['title'] + ' ' + content_df['tagline'] + ' ' + content_df['production_companies']
 
 
 
