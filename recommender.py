@@ -1,13 +1,19 @@
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.metrics.pairwise import cosine_similarity
-import csvParser
+from util import csvParser
 import torch
 import torch.nn as nn
-import matplotlib.pyplot as plt
 
+# Trainable neural network model (optional)
+class MovieRecommender(nn.Module):
+    def __init__(self, input_dim):
+        super(MovieRecommender, self).__init__()
+        self.fc = nn.Linear(input_dim, 128)  # Simple linear layer
+    
+    def forward(self, x):
+        return self.fc(x)
 
-#Process the data to appropriate format
 def Recommender(Movie_idx, movie_factors, number, data):
     
     # Compute cosine similarity
@@ -44,85 +50,41 @@ def TopRecommendations(data,recommendations,score,num):
     #Find the corresponding movies
     recommended_movies = data.iloc[recommendations].copy()
     recommended_movies['Sim_Score'] = score
-    recommended_movies['Score'] = ((0.15*recommended_movies['vote_average']) + (0.15*recommended_movies['popularity']))+(0.7*recommended_movies["Sim_Score"])
+    recommended_movies['Score'] = ((0.25*recommended_movies['vote_average']) + (0.25*recommended_movies['popularity']))+(0.5*recommended_movies["Sim_Score"])
 
     recommendations = recommended_movies.sort_values(by='Score', ascending=False).head(num)['title'].to_numpy()
 
     return recommendations
+    
 
-#Make top movie recommendations recommendations based on the vote average and popularity
-def TopScore(data,recommendations,score,num):
-    #Find the corresponding movies
-    recommended_movies = data.iloc[recommendations].copy()
-    recommended_movies['Sim_Score'] = score
-
-    recommendations = recommended_movies.sort_values(by='Sim_Score', ascending=False).head(num)['Sim_Score'].to_numpy()
-    avg_score = recommendations.mean()
-    return avg_score
-
-#Use to initialize the data and create Movie_factor.pt   
-def initdata():
+def MakeRecommendation(movie_title):
     #Obatin data by parsing csv file
     data = csvParser.ParseMovieData()
+
+    movie_idx = title_idx_conversion(data,movie_title)
+    if movie_idx == None:
+        return None
     #Parse movie data
     movie_factors = processData(data)
     # Save the precomputed movie_factors
     torch.save(movie_factors, "Movie_factor.pt")
-    return data
 
-#Make Movie recommednations
-def MakeRecommendation(data,movie_title):
-    movie_idx = title_idx_conversion(data,movie_title)
-    if movie_idx == None:
-        return None
     # Later, we load the precomputed data and generate recommendations
-    precomputed_factors = torch.load("Movie_factor.pt",weights_only=True)
+    precomputed_factors = torch.load("Movie_factor.pt")
     recommended_indices,sim_score = Recommender(Movie_idx=movie_idx, movie_factors=precomputed_factors, number=10, data=data)
 
     recommended_movies = TopRecommendations(data,recommended_indices,sim_score,5)
     
     return recommended_movies
 
-#To get the average score of each sample size
-def GetScore(data,sample_size):
-    result = []
-    for n in sample_size:
-        sampled_data = data.sample(n=n, random_state=42).index.to_list()
-        total = 0
-        for sample_idx in sampled_data:
-            movie_idx = sample_idx
-            # Later, we load the precomputed data and generate recommendations
-            precomputed_factors = torch.load("Movie_factor.pt",weights_only=True)
-            recommended_indices,sim_score = Recommender(Movie_idx=movie_idx, movie_factors=precomputed_factors, number=10, data=data)
-
-            total += TopScore(data,recommended_indices,sim_score,5)
-        result.append(total/len(sampled_data))
-    
-    return result
-
 #Find the movie Title
 def title_idx_conversion(data, title):
     indices = data.index[data['title'].str.lower() == title.lower()].tolist()
     return indices[0] if indices else None
     
-
-'''
-#Use to plot the data
+    
 def main():
-    data = initdata()
-    sample_size = [5,10,100]
-    result = GetScore(data,sample_size)
-    plt.figure(figsize=(10, 6))
-    plt.plot(sample_size, result, marker='o', linestyle='-', color='b')
-    plt.title('Average Similarity Score vs. Sample Size', fontsize=14)
-    plt.xlabel('Sample Size', fontsize=12)
-    plt.ylabel('Average Similarity Score', fontsize=12)
-    plt.grid(True)
-    plt.xscale('log')  
-    plt.xticks(sample_size, labels=sample_size) 
-    plt.show()
-
+    print(MakeRecommendation('Finding Nemo'))
 
 if __name__ == "__main__":
     main()
-'''
